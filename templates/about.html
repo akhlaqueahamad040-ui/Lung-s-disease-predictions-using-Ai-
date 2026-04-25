@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>About - LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --text: #C8E4F8; --muted: #4A7A9B; --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem;
+    background: rgba(3,10,20,0.9); border-bottom: 1px solid var(--border); }
+  .nav-brand { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--glow); }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; }
+
+  .page { max-width: 800px; margin: 0 auto; padding: 3rem 2rem; }
+  .page-header { text-align: center; margin-bottom: 3rem; }
+  .page-header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .page-header p { color: var(--muted); font-size: 1.1rem; }
+
+  .content-section { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+  .content-section h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--white); }
+  .content-section p { line-height: 1.8; color: var(--text); margin-bottom: 1rem; }
+  .content-section ul { list-style: none; padding-left: 1.5rem; }
+  .content-section li { margin-bottom: 0.75rem; }
+  .content-section li::before { content: '*'; margin-right: 0.5rem; color: var(--glow); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">LUNGAI</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>About LungAI</h1>
+    <p>AI-powered lung disease prediction system</p>
+  </div>
+
+  <div class="content-section">
+    <h2>Our Mission</h2>
+    <p>LungAI is dedicated to providing accessible, AI-powered lung disease risk assessment and analysis tools. 
+    We combine machine learning with medical imaging analysis to help users understand their respiratory health.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>Features</h2>
+    <ul>
+      <li>Symptom-based risk prediction using trained ML models</li>
+      <li>X-ray image analysis with AI-powered radiological assessment</li>
+      <li>Personalized health history and tracking</li>
+      <li>Secure user accounts and data privacy</li>
+      <li>Clinical recommendations and guidance</li>
+    </ul>
+  </div>
+
+  <div class="content-section">
+    <h2>Disclaimer</h2>
+    <p>This application is for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. 
+    Always consult with a qualified healthcare provider for medical decisions. The AI predictions and analyses should not be used as the sole basis for medical decisions.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>Contact</h2>
+    <p>Have questions or feedback? Visit our <a href="/contact" style="color: var(--glow);">contact page</a> to get in touch with us.</p>
+  </div>
+</div>
+
+</body>
+</html>

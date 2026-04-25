@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Page Not Found - LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --text: #C8E4F8; --muted: #4A7A9B; --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); 
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  
+  .error-card { text-align: center; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 3rem; max-width: 500px; }
+  .error-code { font-size: 4rem; font-weight: 800; color: var(--glow); margin-bottom: 1rem; }
+  .error-title { font-size: 1.8rem; margin-bottom: 0.75rem; color: var(--white); }
+  .error-msg { color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+  
+  .home-link { display: inline-block; padding: 0.8rem 2rem; background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14; text-decoration: none; border-radius: 8px; font-weight: 800; 
+    transition: all 0.2s; box-shadow: 0 0 20px rgba(0,220,255,0.2); }
+  .home-link:hover { transform: translateY(-4px); box-shadow: 0 0 40px rgba(0,220,255,0.4); }
+</style>
+</head>
+<body>
+
+<div class="error-card">
+  <div class="error-code">{% if error_code %}{{ error_code }}{% else %}404{% endif %}</div>
+  <div class="error-title">{% if error_msg %}{{ error_msg }}{% else %}Page Not Found{% endif %}</div>
+  <div class="error-msg">The page you're looking for doesn't exist. Please check the URL or return to home.</div>
+  <a href="/" class="home-link">Return to Home</a>
+</div>
+
+</body>
+</html>

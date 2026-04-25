@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>X-Ray Scan Analysis — LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14;
+    --surface: #071525;
+    --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15);
+    --glow: #00DCFF;
+    --glow2: #3A7BD5;
+    --danger: #FF4B6E;
+    --success: #00E5A0;
+    --warn: #FFB800;
+    --text: #C8E4F8;
+    --muted: #4A7A9B;
+    --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,220,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,220,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridshift 20s linear infinite;
+  }
+  @keyframes gridshift { from { background-position: 0 0; } to { background-position: 40px 40px; } }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 64px;
+    background: rgba(3,10,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 1.1rem;
+    color: var(--glow);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--glow); }
+  .nav-links a.active { color: var(--glow); }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .page-header { text-align: center; margin-bottom: 3rem; }
+  .scan-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, rgba(0,220,255,0.15), rgba(58,123,213,0.15));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem;
+    box-shadow: 0 0 40px rgba(0,220,255,0.1);
+  }
+  .page-header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+  .page-header h1 span { color: var(--glow); }
+  .page-header p {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .flash {
+    padding: 0.85rem 1.2rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-left: 3px solid;
+  }
+  .flash.danger  { background: rgba(255,75,110,0.12); border-color: var(--danger); color: #FF8FA3; }
+  .flash.success { background: rgba(0,229,160,0.1);  border-color: var(--success); color: #00E5A0; }
+  .flash.warning { background: rgba(255,184,0,0.1);  border-color: var(--warn);    color: var(--warn); }
+
+  .upload-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 0 60px rgba(0,220,255,0.05);
+  }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    background: var(--panel);
+    margin-bottom: 2rem;
+  }
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: var(--glow);
+    background: rgba(0,220,255,0.04);
+    box-shadow: 0 0 30px rgba(0,220,255,0.08);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+  }
+  .drop-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.7;
+  }
+  .drop-zone h3 {
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .drop-zone p {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .drop-zone .browse-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1.4rem;
+    background: rgba(0,220,255,0.1);
+    border: 1px solid rgba(0,220,255,0.3);
+    border-radius: 8px;
+    color: var(--glow);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+  }
+
+  #preview-box {
+    display: none;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  #preview-box img {
+    max-height: 320px;
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(0,220,255,0.1);
+  }
+  #preview-box .file-name {
+    margin-top: 0.75rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .info-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .info-card .ico { font-size: 1.4rem; }
+  .info-card h4 { color: var(--white); font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .info-card p  { color: var(--muted); font-size: 0.78rem; line-height: 1.5; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    box-shadow: 0 0 30px rgba(0,220,255,0.2);
+  }
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(0,220,255,0.4);
+  }
+  .submit-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #loading {
+    display: none;
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(3,10,20,0.92);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  #loading.active { display: flex; }
+  .scan-animation {
+    width: 120px; height: 160px;
+    border: 2px solid rgba(0,220,255,0.3);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0,220,255,0.03);
+  }
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--glow), transparent);
+    box-shadow: 0 0 12px var(--glow);
+    animation: scanMove 2s ease-in-out infinite;
+  }
+  @keyframes scanMove {
+    0%   { top: 0; }
+    50%  { top: calc(100% - 2px); }
+    100% { top: 0; }
+  }
+  .scan-dots span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--glow);
+    margin: 0 3px;
+    animation: dotPulse 1.2s ease-in-out infinite;
+  }
+  .scan-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .scan-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotPulse { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+  #loading p {
+    color: var(--glow);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+  }
+
+  .disclaimer {
+    margin-top: 2rem;
+    padding: 1rem 1.2rem;
+    background: rgba(255,184,0,0.06);
+    border: 1px solid rgba(255,184,0,0.2);
+    border-radius: 10px;
+    font-size: 0.78rem;
+    color: rgba(255,184,0,0.8);
+    line-height: 1.6;
+  }
+  .disclaimer strong { color: var(--warn); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">LUNGAI</a>
+  <div class="nav-links">
+    <a href="/predict">Symptoms</a>
+    <a href="/xray" class="active">X-Ray</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="page-header">
+    <div class="scan-icon">X</div>
+    <h1>Chest <span>X-Ray</span> Analysis</h1>
+    <p>Upload a chest X-ray image for AI-powered radiological analysis. Get instant findings, observations, and clinical recommendations.</p>
+  </div>
+
+  <div class="upload-card">
+    <form id="xray-form" method="POST" enctype="multipart/form-data">
+
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" name="xray_file" id="xray-file"
+               accept=".png,.jpg,.jpeg,.webp" required/>
+        <span class="drop-icon">X</span>
+        <h3>Drop your X-ray image here</h3>
+        <p>Supports PNG, JPG, JPEG, WEBP — max 10 MB</p>
+        <span class="browse-btn">Browse Files</span>
+      </div>
+
+      <div id="preview-box">
+        <img id="preview-img" src="" alt="X-ray preview"/>
+        <div class="file-name" id="file-name"></div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <span class="ico">A</span>
+          <div>
+            <h4>AI Vision Analysis</h4>
+            <p>Claude AI analyzes lung fields, cardiac silhouette, and pleural spaces.</p>
+          </div>
+        </div>
+        <div class="info-card">
+          <span class="ico">R</span>
+          <div>
+            <h4>Full Radiological Report</h4>
+            <p>Structured findings with urgency level and clinical recommendations.</p>
+          </div>
+        </div>
+        <div class="info-card">
+          <span class="ico">S</span>
+          <div>
+            <h4>Saved to History</h4>
+            <p>All scan results are stored in your personal history for reference.</p>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn" disabled>
+        <span>S</span> Analyze X-Ray
+      </button>
+    </form>
+
+    <div class="disclaimer">
+      <strong>Medical Disclaimer:</strong> This AI analysis is for educational and screening purposes only.
+      It does not constitute a medical diagnosis. Always consult a qualified radiologist or physician
+      for clinical decisions. Results may not be accurate for all image types.
+    </div>
+  </div>
+
+</div>
+
+<div id="loading">
+  <div class="scan-animation">
+    <div class="scan-line"></div>
+  </div>
+  <div class="scan-dots">
+    <span></span><span></span><span></span>
+  </div>
+  <p>ANALYZING X-RAY SCAN...</p>
+</div>
+
+<script>
+const fileInput  = document.getElementById('xray-file');
+const dropZone   = document.getElementById('drop-zone');
+const previewBox = document.getElementById('preview-box');
+const previewImg = document.getElementById('preview-img');
+const fileNameEl = document.getElementById('file-name');
+const submitBtn  = document.getElementById('submit-btn');
+const form       = document.getElementById('xray-form');
+const loading    = document.getElementById('loading');
+
+function showPreview(file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  fileNameEl.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+  previewBox.style.display = 'block';
+  submitBtn.disabled = false;
+}
+
+fileInput.addEventListener('change', e => showPreview(e.target.files[0]));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+    showPreview(file);
+  }
+});
+
+form.addEventListener('submit', e => {
+  if (!fileInput.files[0]) { e.preventDefault(); return; }
+  loading.classList.add('active');
+  submitBtn.disabled = true;
+});
+</script>
+</body>
+</html>

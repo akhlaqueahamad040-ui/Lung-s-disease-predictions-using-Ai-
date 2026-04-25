@@ -1,0 +1,263 @@
+import os
+import base64
+import json
+from datetime import datetime
+from flask import Flask, request, redirect, url_for, session, flash, render_template
+from werkzeug.utils import secure_filename
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('You must be logged in.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Define BASE_DIR and app
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__)
+
+# ── Config (app ke upar add karo) ──
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ── DB Table (init_db ke andar add karo) ──
+CREATE_TABLE_QUERY = """
+CREATE TABLE IF NOT EXISTS xray_scans (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    filename     TEXT    NOT NULL,
+    analysis     TEXT    NOT NULL,
+    finding      TEXT    NOT NULL,
+    confidence   REAL    NOT NULL,
+    date         TEXT    NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)
+"""
+# ── Helper Functions ──
+def get_db():
+    import sqlite3
+    db = sqlite3.connect(os.path.join(BASE_DIR, "xray.db"))
+    db.row_factory = sqlite3.Row
+    return db
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def analyze_xray_with_ai(image_path: str) -> dict:
+    import anthropic
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return _mock_xray_analysis()  # Demo mode
+
+    with open(image_path, "rb") as f:
+        image_bytes = f.read()
+
+    ext = image_path.rsplit(".", 1)[-1].lower()
+    media_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg",
+                 "png": "image/png", "webp": "image/webp"}
+    media_type = media_map.get(ext, "image/jpeg")
+    b64_image = base64.standard_b64encode(image_bytes).decode("utf-8")
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    system_prompt = """You are an expert radiologist AI assistant.
+Analyze the chest X-ray and respond ONLY with valid JSON:
+{
+  "finding": "Normal | Abnormal | Suspicious",
+  "confidence": <float 0-100>,
+  "primary_diagnosis": "<brief diagnosis>",
+  "observations": ["<obs1>", "<obs2>", "<obs3>"],
+  "lung_fields": "<description>",
+  "cardiac_silhouette": "<description>",
+  "pleural_spaces": "<description>",
+  "bones_and_soft_tissue": "<description>",
+  "recommendation": "<clinical recommendation>",
+  "urgency": "Routine | Urgent | Emergency"
+}"""
+
+    response = client.messages.create(
+        model="claude-opus-4-5",
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": b64_image,
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": "Analyze this chest X-ray and return JSON report."
+                }
+            ],
+        }],
+    )
+
+    raw = response.content[0].text.strip()
+    if raw.startswith(""):
+        raw = raw.split("")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return json.loads(raw)
+
+
+def _mock_xray_analysis() -> dict:
+    """Demo mode — jab API key na ho"""
+    import random
+    options = [
+        {
+            "finding": "Normal",
+            "confidence": round(random.uniform(88, 96), 1),
+            "primary_diagnosis": "No significant pulmonary abnormality detected",
+            "observations": [
+                "Lung fields appear clear and well-aerated bilaterally",
+                "No focal consolidation, effusion, or pneumothorax identified",
+                "Cardiac silhouette within normal limits"
+            ],
+            "lung_fields": "Clear bilaterally with no opacities",
+            "cardiac_silhouette": "Normal size, cardiothoracic ratio < 0.5",
+            "pleural_spaces": "No effusion or thickening",
+            "bones_and_soft_tissue": "Bony thorax intact",
+            "recommendation": "No follow-up required. Annual checkup advised.",
+            "urgency": "Routine"
+        },
+        {
+            "finding": "Suspicious",
+            "confidence": round(random.uniform(72, 85), 1),
+            "primary_diagnosis": "Possible early pulmonary infiltrate",
+            "observations": [
+                "Faint opacity noted in the right lower lobe",
+                "Subtle increased density in the perihilar region",
+                "Mild prominence of pulmonary vasculature"
+            ],
+            "lung_fields": "Mild hazy opacity in right lower zone",
+            "cardiac_silhouette": "Mildly enlarged, borderline ratio",
+            "pleural_spaces": "Trace right-sided pleural blunting",
+            "bones_and_soft_tissue": "No acute osseous abnormality",
+            "recommendation": "CT chest recommended. Pulmonologist referral advised.",
+            "urgency": "Urgent"
+        },
+        {
+            "finding": "Abnormal",
+            "confidence": round(random.uniform(85, 94), 1),
+            "primary_diagnosis": "Bilateral pulmonary infiltrates",
+            "observations": [
+                "Bilateral patchy consolidation in both lower lobes",
+                "Air bronchograms visible in affected areas",
+                "Increased interstitial markings throughout"
+            ],
+            "lung_fields": "Diffuse bilateral infiltrates",
+            "cardiac_silhouette": "Obscured left heart border",
+            "pleural_spaces": "Bilateral small pleural effusions",
+            "bones_and_soft_tissue": "Demineralization noted",
+            "recommendation": "Urgent pulmonologist review. Consider bronchoscopy.",
+            "urgency": "Emergency"
+        }
+    ]
+    return random.choice(options)
+# ── Routes ──
+@app.route("/xray", methods=["GET", "POST"])
+@login_required
+def xray():
+    if request.method == "POST":
+        if "xray_file" not in request.files:
+            flash("No file selected.", "danger")
+            return redirect(url_for("xray"))
+
+        file = request.files["xray_file"]
+        if file.filename == "" or not allowed_file(file.filename):
+            flash("Invalid file. Use PNG, JPG, or JPEG.", "danger")
+            return redirect(url_for("xray"))
+
+        try:
+            filename = secure_filename(
+                f"xray_{session['user_id']}_{int(datetime.now().timestamp())}"
+                f".{file.filename.rsplit('.', 1)[1].lower()}"
+            )
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(save_path)
+
+            analysis = analyze_xray_with_ai(save_path)
+
+            db = get_db()
+            db.execute(
+                """INSERT INTO xray_scans
+                   (user_id, filename, analysis, finding, confidence, date)
+                   VALUES (?,?,?,?,?,?)""",
+                (
+                    session["user_id"],
+                    filename,
+                    json.dumps(analysis),
+                    analysis.get("finding", "Unknown"),
+                    analysis.get("confidence", 0.0),
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            )
+            db.commit()
+
+            return render_template("xray_result.html",
+                                   analysis=analysis,
+                                   image_filename=filename)
+
+        except Exception as e:
+            flash(f"X-ray analysis error: {str(e)}", "danger")
+            return redirect(url_for("xray"))
+
+    return render_template("xray.html")
+
+
+@app.route("/xray/history")
+@login_required
+def xray_history():
+    db = get_db()
+    scans = db.execute(
+        "SELECT * FROM xray_scans WHERE user_id=? ORDER BY date DESC",
+        (session["user_id"],)
+    ).fetchall()
+
+    scan_list = []
+    for s in scans:
+        d = dict(s)
+        try:
+            d["analysis_data"] = json.loads(d["analysis"])
+        except Exception:
+            d["analysis_data"] = {}
+        scan_list.append(d)
+
+    return render_template("xray_history.html", scans=scan_list)
+
+
+@app.route("/xray/delete/<int:scan_id>", methods=["POST"])
+@login_required
+def delete_xray(scan_id):
+    db = get_db()
+    row = db.execute(
+        "SELECT filename FROM xray_scans WHERE id=? AND user_id=?",
+        (scan_id, session["user_id"])
+    ).fetchone()
+
+    if row:
+        img_path = os.path.join(app.config["UPLOAD_FOLDER"], row["filename"])
+        if os.path.exists(img_path):
+            os.remove(img_path)
+        db.execute("DELETE FROM xray_scans WHERE id=? AND user_id=?",
+                   (scan_id, session["user_id"]))
+        db.commit()
+        flash("X-ray scan deleted.", "info")
+
+    return redirect(url_for("xray_history"))

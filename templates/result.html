@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prediction Result - LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --danger: #FF4B6E; --success: #00E5A0; --text: #C8E4F8; --muted: #4A7A9B;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem;
+    background: rgba(3,10,20,0.9); border-bottom: 1px solid var(--border); }
+  .nav-brand { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--glow); }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; }
+
+  .page { max-width: 700px; margin: 0 auto; padding: 2rem; }
+  .result-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem; text-align: center;
+  }
+  .result-icon { font-size: 4rem; margin-bottom: 1rem; }
+  .result-title { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; }
+  .result-card.high { --color: var(--danger); }
+  .result-card.low { --color: var(--success); }
+  .result-card.high .result-title { color: var(--danger); }
+  .result-card.low .result-title { color: var(--success); }
+
+  .confidence { font-size: 1.5rem; margin: 1.5rem 0; }
+  .precautions { background: var(--panel); border-left: 3px solid var(--glow2);
+    border-radius: 8px; padding: 1.5rem; text-align: left; margin: 2rem 0; }
+  .precautions h3 { margin-bottom: 1rem; }
+  .precautions ul { list-style: none; }
+  .precautions li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; }
+  .precautions li::before { content: '*'; position: absolute; left: 0; }
+
+  .action-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+  .btn { padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700;
+    background: rgba(0,220,255,0.08); border: 1px solid var(--border); color: var(--glow); }
+  .btn:hover { background: rgba(0,220,255,0.15); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">LUNGAI</a>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/xray">X-Ray</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="result-card {% if result == 'High Risk' %}high{% else %}low{% endif %}">
+    <div class="result-icon">
+      {% if result == 'High Risk' %}ALERT{% else %}OK{% endif %}
+    </div>
+    <div class="result-title">{{ result }}</div>
+    <div class="confidence">Confidence: {{ confidence }}%</div>
+
+    <div class="precautions">
+      <h3>Recommended Actions:</h3>
+      <ul>
+        {% for precaution in precautions %}
+          <li>{{ precaution }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="action-links">
+      <a href="/predict" class="btn">New Prediction</a>
+      <a href="/dashboard" class="btn">Dashboard</a>
+      <a href="/xray" class="btn">X-Ray Analysis</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

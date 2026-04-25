@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contact - LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --text: #C8E4F8; --muted: #4A7A9B;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem;
+    background: rgba(3,10,20,0.9); border-bottom: 1px solid var(--border); }
+  .nav-brand { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--glow); }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; }
+
+  .page { max-width: 600px; margin: 0 auto; padding: 2rem; }
+  .page-header { text-align: center; margin-bottom: 2rem; }
+  .page-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 700; }
+  .form-group input, .form-group textarea { width: 100%; padding: 0.75rem; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Syne', sans-serif; }
+  .form-group textarea { resize: vertical; min-height: 150px; }
+
+  .submit-btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem;
+    cursor: pointer; font-family: 'Syne', sans-serif; }
+
+  .flash { padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem; }
+  .flash.success { background: rgba(0,229,160,0.1); border: 1px solid #00E5A0; color: #00E5A0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">LUNGAI</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/contact">Contact</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Contact Us</h1>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="form-card">
+    <form method="POST">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required/>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" name="subject" required/>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea name="message" required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Send Message</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

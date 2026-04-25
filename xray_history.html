@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>X-Ray Scan History — LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --danger: #FF4B6E; --success: #00E5A0; --warn: #FFB800;
+    --text: #C8E4F8; --muted: #4A7A9B; --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(0,220,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,220,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 64px;
+    background: rgba(3,10,20,0.9); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--glow); text-decoration: none; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--glow); }
+
+  .page { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+  .page-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--white); }
+  .page-header h1 span { color: var(--glow); }
+  .new-scan-btn {
+    padding: 0.65rem 1.4rem;
+    background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .new-scan-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,220,255,0.3); }
+
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .empty-state .ico { font-size: 4rem; margin-bottom: 1rem; display: block; opacity: 0.5; }
+  .empty-state h3 { color: var(--white); font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .empty-state p  { color: var(--muted); font-size: 0.9rem; }
+
+  .scan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+
+  .scan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.3s;
+    animation: fadeUp 0.5s ease forwards;
+    opacity: 0;
+  }
+  .scan-card:hover { transform: translateY(-4px); border-color: rgba(0,220,255,0.3); box-shadow: 0 8px 40px rgba(0,220,255,0.08); }
+  .scan-card:nth-child(1) { animation-delay: 0.05s; }
+  .scan-card:nth-child(2) { animation-delay: 0.10s; }
+  .scan-card:nth-child(3) { animation-delay: 0.15s; }
+  .scan-card:nth-child(4) { animation-delay: 0.20s; }
+
+  .scan-image {
+    width: 100%; height: 180px;
+    object-fit: contain;
+    background: #000;
+    display: block;
+    filter: brightness(1.05);
+  }
+
+  .scan-body { padding: 1rem 1.1rem 1.2rem; }
+  .scan-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+
+  .finding-badge {
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-normal     { background: rgba(0,229,160,0.15);  color: var(--success); border: 1px solid rgba(0,229,160,0.3); }
+  .badge-suspicious { background: rgba(255,184,0,0.15);  color: var(--warn);    border: 1px solid rgba(255,184,0,0.3); }
+  .badge-abnormal   { background: rgba(255,75,110,0.15); color: var(--danger);  border: 1px solid rgba(255,75,110,0.3); }
+
+  .conf-text { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--muted); }
+
+  .scan-diagnosis { font-size: 0.85rem; color: var(--text); line-height: 1.5; margin-bottom: 0.75rem; opacity: 0.85; }
+  .scan-date { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-bottom: 0.9rem; }
+
+  .scan-actions { display: flex; gap: 0.5rem; }
+  .btn-view {
+    flex: 1;
+    padding: 0.5rem 0.8rem;
+    background: rgba(0,220,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--glow);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+  }
+  .btn-view:hover { background: rgba(0,220,255,0.15); border-color: var(--glow); }
+
+  .btn-delete {
+    padding: 0.5rem 0.8rem;
+    background: rgba(255,75,110,0.08);
+    border: 1px solid rgba(255,75,110,0.2);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-delete:hover { background: rgba(255,75,110,0.15); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">⬡ LUNGAI</a>
+  <div class="nav-links">
+    <a href="/predict">Symptoms</a>
+    <a href="/xray">X-Ray</a>
+    <a href="/xray/history" class="active">History</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="page-header">
+    <h1>🩻 X-Ray <span>Scan History</span></h1>
+    <a href="/xray" class="new-scan-btn">+ New Scan</a>
+  </div>
+
+  {% if scans %}
+    <div class="scan-grid">
+      {% for scan in scans %}
+        {% set fl = scan.finding | lower %}
+        <div class="scan-card">
+          <img class="scan-image"
+               src="{{ url_for('static', filename='uploads/' + scan.filename) }}"
+               alt="X-Ray"/>
+          <div class="scan-body">
+            <div class="scan-top">
+              <span class="finding-badge badge-{{ fl }}">{{ scan.finding }}</span>
+              <span class="conf-text">{{ scan.confidence | int }}% conf</span>
+            </div>
+            <div class="scan-diagnosis">
+              {{ scan.analysis_data.primary_diagnosis | default('No diagnosis available') }}
+            </div>
+            <div class="scan-date">{{ scan.date }}</div>
+            <div class="scan-actions">
+              <span class="btn-view">
+                {{ scan.analysis_data.urgency | default('Routine') }} Priority
+              </span>
+              <form action="/xray/delete/{{ scan.id }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn-delete"
+                        onclick="return confirm('Delete this scan record?')">🗑️</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="ico">🩻</span>
+      <h3>No X-Ray Scans Yet</h3>
+      <p>Upload your first chest X-ray to get an AI-powered radiological analysis.</p>
+    </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

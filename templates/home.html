@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LungAI - Lung Disease Prediction System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --danger: #FF4B6E; --success: #00E5A0; --warn: #FFB800;
+    --text: #C8E4F8; --muted: #4A7A9B; --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem; height: 64px; background: rgba(3,10,20,0.9);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--glow); text-decoration: none; font-size: 1.2rem; }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--glow); }
+
+  .hero {
+    position: relative; z-index: 1; max-width: 1000px; margin: 0 auto;
+    padding: 6rem 2rem 4rem; text-align: center;
+  }
+  .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em; }
+  .hero h1 span { color: var(--glow); }
+  .hero p { font-size: 1.1rem; color: var(--muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 0.8rem 2rem; border-radius: 10px; font-weight: 800;
+    text-decoration: none; cursor: pointer; border: none;
+    font-family: 'Syne', sans-serif; font-size: 1rem; transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14; box-shadow: 0 0 30px rgba(0,220,255,0.2);
+  }
+  .btn-primary:hover { transform: translateY(-4px); box-shadow: 0 0 50px rgba(0,220,255,0.4); }
+  .btn-outline {
+    background: transparent; border: 2px solid var(--border); color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--glow); color: var(--glow); }
+
+  .features {
+    max-width: 1000px; margin: 4rem auto 0; padding: 0 2rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;
+  }
+  .feature-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2rem; text-align: center;
+    transition: all 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-8px); border-color: rgba(0,220,255,0.3);
+    box-shadow: 0 8px 40px rgba(0,220,255,0.1);
+  }
+  .feat-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .feature-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--white); }
+  .feature-card p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">LUNGAI</a>
+  <div class="nav-links">
+    {% if session.user_id %}
+      <a href="/dashboard">Dashboard</a>
+      <a href="/logout">Logout</a>
+    {% else %}
+      <a href="/register">Register</a>
+      <a href="/login">Login</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>LungAI - <span>AI-Powered Lung Disease Prediction</span></h1>
+  <p>Comprehensive lung disease risk assessment using machine learning and X-ray analysis.</p>
+
+  <div class="hero-buttons">
+    {% if session.user_id %}
+      <a href="/predict" class="btn btn-primary">Check Symptoms</a>
+      <a href="/xray" class="btn btn-outline">Analyze X-Ray</a>
+    {% else %}
+      <a href="/register" class="btn btn-primary">Get Started</a>
+      <a href="/login" class="btn btn-outline">Login</a>
+    {% endif %}
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feat-icon">S</div>
+      <h3>Symptom Analysis</h3>
+      <p>Input your symptoms and get instant risk assessment using trained ML models.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">X</div>
+      <h3>X-Ray Analysis</h3>
+      <p>Upload chest X-rays for AI-powered radiological analysis and findings.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">H</div>
+      <h3>History Tracking</h3>
+      <p>Keep track of all your predictions and X-ray scans in your personal dashboard.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

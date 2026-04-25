@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Register - LungAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030A14; --surface: #071525; --panel: #0C1E33;
+    --border: rgba(0,220,255,0.15); --glow: #00DCFF; --glow2: #3A7BD5;
+    --danger: #FF4B6E; --text: #C8E4F8; --muted: #4A7A9B; --white: #F0F8FF;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Syne', sans-serif; color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 400px; width: 100%; }
+  .auth-card h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--white); }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 700; }
+  .form-group input { width: 100%; padding: 0.75rem; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Syne', sans-serif; }
+  .form-group input:focus { outline: none; border-color: var(--glow); box-shadow: 0 0 20px rgba(0,220,255,0.2); }
+
+  .submit-btn {
+    width: 100%; padding: 0.85rem; background: linear-gradient(135deg, var(--glow2), var(--glow));
+    color: #030A14; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem;
+    cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.2s;
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,220,255,0.3); }
+
+  .login-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+  .login-link a { color: var(--glow); text-decoration: none; font-weight: 700; }
+
+  .flash { padding: 0.75rem; background: rgba(255,75,110,0.12); border: 1px solid var(--danger);
+    border-radius: 8px; margin-bottom: 1.5rem; color: #FF8FA3; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<div class="auth-card">
+  <h1>Register</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" name="name" required/>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" name="email" required/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" required/>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" name="confirm_password" required/>
+    </div>
+    <button type="submit" class="submit-btn">Register</button>
+  </form>
+
+  <div class="login-link">
+    Already have an account? <a href="/login">Login</a>
+  </div>
+</div>
+
+</body>
+</html>
